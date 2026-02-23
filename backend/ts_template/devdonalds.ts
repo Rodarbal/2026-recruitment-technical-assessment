@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
+import {query} from "express-validator";
 
 // ==== Type Definitions, feel free to add or modify ==========================
-interface cookbookEntry {
+interface cookbookEntry { 
   name: string;
-  type: string;
 }
 
 interface requiredItem {
@@ -12,10 +12,12 @@ interface requiredItem {
 }
 
 interface recipe extends cookbookEntry {
+  type: "recipe";
   requiredItems: requiredItem[];
 }
 
 interface ingredient extends cookbookEntry {
+  type: "ingredient";
   cookTime: number;
 }
 
@@ -26,7 +28,8 @@ const app = express();
 app.use(express.json());
 
 // Store your recipes here!
-const cookbook: any = null;
+
+const cookbook: (recipe | ingredient)[] = [];
 
 // Task 1 helper (don't touch)
 app.post("/parse", (req:Request, res:Response) => {
@@ -70,8 +73,10 @@ const parse_handwriting = (recipeName: string): string | null => {
 // Endpoint that adds a CookbookEntry to your magical cookbook
 app.post("/entry", (req:Request, res:Response) => {
   // TODO: implement me
-  console.log(req.body)
-  res.status(200).send("not yet implemented!")
+  const newEntry:(recipe | ingredient) = {...req};
+  console.log(newEntry);
+  cookbook.push(newEntry);
+  res.status(200).json({})
 
 });
 
@@ -79,13 +84,14 @@ app.post("/entry", (req:Request, res:Response) => {
 // Endpoint that returns a summary of a recipe that corresponds to a query name
 app.get("/summary", (req:Request, res:Request) => {
   // TODO: implement me
-  res.status(500).send("not yet implemented!")
+  res.send("Hello World!")
 
 });
 
 // =============================================================================
 // ==== DO NOT TOUCH ===========================================================
 // =============================================================================
+
 const port = 8080;
 app.listen(port, () => {
   console.log(`Running on: http://127.0.0.1:8080`);
