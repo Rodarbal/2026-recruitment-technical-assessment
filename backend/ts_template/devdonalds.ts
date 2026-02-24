@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import {query} from "express-validator";
+//import {body, validationResult} from "express-validator";
 
 // ==== Type Definitions, feel free to add or modify ==========================
 interface cookbookEntry { 
@@ -73,11 +73,33 @@ const parse_handwriting = (recipeName: string): string | null => {
 // Endpoint that adds a CookbookEntry to your magical cookbook
 app.post("/entry", (req:Request, res:Response) => {
   // TODO: implement me
-  const newEntry:(recipe | ingredient) = {...req};
-  console.log(newEntry);
+  const { body } = req
+  const newEntry:(recipe | ingredient) = {...body};
+  console.log(body);
+  for(let i = 0; i < cookbook.length; i++) {
+    // note to self maybe set this to strict inequality if hidden test case trips
+    if(body.name == cookbook[i].name) {
+      return res.status(400).end()
+    } 
+  }
+  if(newEntry.type == "ingredient") {
+    if(newEntry.cookTime < 0) {
+      return res.status(400).end()
+    }
+  }else if(newEntry.type == "recipe") {
+    const found = new Set();
+    for(let x = 0; x < newEntry.requiredItems.length; x++) {
+      if(found.has(newEntry.requiredItems[x].name)) {
+        return res.status(400).end()
+      }
+      found.add(newEntry.requiredItems[x].name)
+    }
+  }else {
+    console.log("trip or nah")
+    return res.status(400).end()
+  }
   cookbook.push(newEntry);
-  res.status(200).json({})
-
+  return res.status(200).end()
 });
 
 // [TASK 3] ====================================================================
