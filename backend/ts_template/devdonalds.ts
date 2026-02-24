@@ -29,7 +29,74 @@ app.use(express.json());
 
 // Store your recipes here!
 
-const cookbook: (recipe | ingredient)[] = [];
+const cookbook: (recipe | ingredient)[] = [
+  {
+    type: "recipe",
+    name: "Skibidi Spaghetti",
+    requiredItems: [
+      {
+        name: "Meatball",
+        quantity: 3,
+      },
+      {
+        name: "Pasta",
+        quantity: 1,
+      },
+      {
+        name: "Tomato",
+        quantity: 2,
+      },
+    ],
+  },
+  {
+    type: "recipe",
+    name: "Meatball",
+    requiredItems: [
+      {
+        name: "Beef",
+        quantity: 2,
+      },
+      {
+        name: "Egg",
+        quantity: 1,
+      },
+    ],
+  },
+  {
+    type: "recipe",
+    name: "Pasta",
+    requiredItems: [
+      {
+        name: "Flour",
+        quantity: 3,
+      },
+      {
+        name: "Egg",
+        quantity: 1,
+      },
+    ],
+  },
+  {
+    type: "ingredient",
+    name: "Beef",
+    cookTime: 5,
+  },
+  {
+    type: "ingredient",
+    name: "Egg",
+    cookTime: 3,
+  },
+  {
+    type: "ingredient",
+    name: "Flour",
+    cookTime: 0,
+  },
+  {
+    type: "ingredient",
+    name: "Tomato",
+    cookTime: 2,
+  },
+];
 
 // Task 1 helper (don't touch)
 app.post("/parse", (req: Request, res: Response) => {
@@ -103,8 +170,37 @@ app.post("/entry", (req: Request, res: Response) => {
 
 // [TASK 3] ====================================================================
 // Endpoint that returns a summary of a recipe that corresponds to a query name
-app.get("/summary", (req: Request, res: Request) => {
+app.get("/summary", (req: Request, res: Response) => {
   // TODO: implement me
+  const { query } = req;
+
+  const selectedRecipe = (() => {
+    for (let x = 0; x < cookbook.length; x++) {
+      if (cookbook[x].name == query.name) {
+        return cookbook[x];
+      }
+    }
+    //console.log("Something went really wrong")
+  })();
+
+  const ingridientPosition = (x) => {
+    for (let i = 0; i < cookbook.length; i++) {
+      if (cookbook[i].name == x.name) {
+        return i;
+      }
+    }
+    // error case: no such item exists
+    return -1;
+  };
+  // ERROR CONTEXT -- saying requiredItems aint a type on ingridient even tho selectedRecipe is always recipe must fix stupid type script
+  //const ingridientPositions: number[] = selectedRecipe.requiredItems.map(ingridientPosition);
+
+  //console.log(ingridientPositions)
+
+  //const isRecipe = () =>
+
+  console.log(selectedRecipe.type);
+
   res.send("Hello World!");
 });
 
