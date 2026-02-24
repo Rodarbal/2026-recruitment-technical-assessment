@@ -77,7 +77,6 @@ app.post("/entry", (req:Request, res:Response) => {
   const newEntry:(recipe | ingredient) = {...body};
   console.log(body);
   for(let i = 0; i < cookbook.length; i++) {
-    // note to self maybe set this to strict inequality if hidden test case trips
     if(body.name == cookbook[i].name) {
       return res.status(400).end()
     } 
