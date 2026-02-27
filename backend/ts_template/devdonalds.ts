@@ -21,6 +21,11 @@ interface ingredient extends cookbookEntry {
   cookTime: number;
 }
 
+interface compiledRecipe extends cookbookEntry {
+  cookTime: number;
+  ingredients: requiredItem[];
+}
+
 // =============================================================================
 // ==== HTTP Endpoint Stubs ====================================================
 // =============================================================================
@@ -208,10 +213,10 @@ app.get("/summary", (req: Request, res: Response) => {
 
   const ingridientPositions: number[] = selectedRecipe.requiredItems.map(ingridientPosition);
   
-  const summary: recipe = {
-    type: selectedRecipe.type,
+  const summary: compiledRecipe = {
     name: selectedRecipe.name,
-    requiredItems: []
+    cookTime: 0,
+    ingredients: []
 
   }
  
@@ -220,18 +225,21 @@ app.get("/summary", (req: Request, res: Response) => {
   const recipesToIndex: Record<number, number> = {};
 
   for(let j = 0; j < ingridientPositions.length; j++) {
+    
     if(cookbook[ingridientPositions[j]].type === "ingredient") {
-      summary.requiredItems.push({name: cookbook[ingridientPositions[j]].name, 
+      summary.ingredients.push({name: cookbook[ingridientPositions[j]].name, 
                                   quantity: selectedRecipe.requiredItems[j].quantity})
+      //summary.cookTime += (cookbook[ingridientPositions[j]].cookTime * selectedRecipe.requiredItems[j].quantity)
+      console.log(cookbook[ingridientPositions[j]])
+      console.log(selectedRecipe.requiredItems[j].quantity)
+      console.log(selectedRecipe.requiredItems[j])
     }else {
       recipes.push(ingridientPositions[j])
       recipesToIndex[ingridientPositions[j]] = j
      }
   }
-  console.log(recipes);
-  console.log(recipesToIndex);
-  console.log(quantityMultiples);
  
+
  for(let k = 0; k < recipes.length; k++) {
     
     
@@ -241,15 +249,15 @@ app.get("/summary", (req: Request, res: Response) => {
     if ("requiredItems" in currentRecipe) {
       for(let p = 0; p < currentRecipe.requiredItems.length; p++) {
     
-        if (summary.requiredItems.some(recipeName => recipeName.name ===  currentRecipe.requiredItems[p].name)) {
+        if (summary.ingredients.some(recipeName => recipeName.name ===  currentRecipe.requiredItems[p].name)) {
           //summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity});
-          console.log(currentRecipe.requiredItems[p].name)
-          const index = summary.requiredItems.findIndex(item => item.name === currentRecipe.requiredItems[p].name);
+          const index = summary.ingredients.findIndex(item => item.name === currentRecipe.requiredItems[p].name);
           if (index !== -1) {
-            summary.requiredItems[index].quantity += (currentRecipe.requiredItems[p].quantity * multiplier) //* selectedRecipe.requiredItems[k]);
+            summary.ingredients[index].quantity += (currentRecipe.requiredItems[p].quantity * multiplier) //* selectedRecipe.requiredItems[k]);
+
           }
         }else {
-          summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity * multiplier});
+          summary.ingredients.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity * multiplier});
         }
       }
     }
