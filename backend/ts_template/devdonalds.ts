@@ -183,6 +183,7 @@ app.get("/summary", (req: Request, res: Response) => {
     }
     return res.status(404).end();
   })();
+  
 
   const ingridientPosition = (x) => {
     for (let i = 0; i < cookbook.length; i++) {
@@ -194,11 +195,17 @@ app.get("/summary", (req: Request, res: Response) => {
     return res.status(400).end();
   };
   
-  // if statement solely here to fix typescript narrowing error sigh  
+  // type script narrowing  
   if (!selectedRecipe || selectedRecipe.type !== "recipe") {
     return res.status(400).end();
   }
-  
+    
+  const quantityMultiples: number[] = []
+  for(let u = 0; u < selectedRecipe.requiredItems.length; u++) {
+    quantityMultiples.push(selectedRecipe.requiredItems[u].quantity);
+  }
+
+
   const ingridientPositions: number[] = selectedRecipe.requiredItems.map(ingridientPosition);
   
   const summary: recipe = {
@@ -210,7 +217,7 @@ app.get("/summary", (req: Request, res: Response) => {
  
   
   const recipes: number[] = []
-  const recipesIndex: number[] = []
+  const recipesToIndex: Record<number, number> = {};
 
   for(let j = 0; j < ingridientPositions.length; j++) {
     if(cookbook[ingridientPositions[j]].type === "ingredient") {
@@ -218,27 +225,31 @@ app.get("/summary", (req: Request, res: Response) => {
                                   quantity: selectedRecipe.requiredItems[j].quantity})
     }else {
       recipes.push(ingridientPositions[j])
-      recipesIndex.push(j)
-    }
+      recipesToIndex[ingridientPositions[j]] = j
+     }
   }
-  
+  console.log(recipes);
+  console.log(recipesToIndex);
+  console.log(quantityMultiples);
  
  for(let k = 0; k < recipes.length; k++) {
     
-    // type narrowing
+    
     const currentRecipe = cookbook[recipes[k]];
+    const multiplier = quantityMultiples[recipesToIndex[recipes[k]]]
 
     if ("requiredItems" in currentRecipe) {
       for(let p = 0; p < currentRecipe.requiredItems.length; p++) {
     
         if (summary.requiredItems.some(recipeName => recipeName.name ===  currentRecipe.requiredItems[p].name)) {
           //summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity});
+          console.log(currentRecipe.requiredItems[p].name)
           const index = summary.requiredItems.findIndex(item => item.name === currentRecipe.requiredItems[p].name);
           if (index !== -1) {
-            summary.requiredItems[index].quantity += (currentRecipe.requiredItems[p].quantity);
+            summary.requiredItems[index].quantity += (currentRecipe.requiredItems[p].quantity * multiplier) //* selectedRecipe.requiredItems[k]);
           }
         }else {
-          summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity});
+          summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity * multiplier});
         }
       }
     }
