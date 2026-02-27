@@ -101,7 +101,7 @@ const cookbook: (recipe | ingredient)[] = [
     name: "Tomato",
     cookTime: 2,
   },
-];
+]; 
 
 
 // Task 1 helper (don't touch)
@@ -186,7 +186,7 @@ app.get("/summary", (req: Request, res: Response) => {
         return cookbook[x];
       }
     }
-    return res.status(404).end();
+    return res.status(400).end();
   })();
   
 
@@ -225,30 +225,40 @@ app.get("/summary", (req: Request, res: Response) => {
   const recipesToIndex: Record<number, number> = {};
 
   for(let j = 0; j < ingridientPositions.length; j++) {
-    
-    if(cookbook[ingridientPositions[j]].type === "ingredient") {
-      summary.ingredients.push({name: cookbook[ingridientPositions[j]].name, 
+    const item1 = cookbook[ingridientPositions[j]];
+    if(item1.type === "ingredient") {
+      summary.ingredients.push({name: item1.name, 
                                   quantity: selectedRecipe.requiredItems[j].quantity})
-      //summary.cookTime += (cookbook[ingridientPositions[j]].cookTime * selectedRecipe.requiredItems[j].quantity)
-      console.log(cookbook[ingridientPositions[j]])
-      console.log(selectedRecipe.requiredItems[j].quantity)
-      console.log(selectedRecipe.requiredItems[j])
+      summary.cookTime += (item1.cookTime * selectedRecipe.requiredItems[j].quantity)
+      
     }else {
       recipes.push(ingridientPositions[j])
       recipesToIndex[ingridientPositions[j]] = j
      }
   }
- 
+  
 
- for(let k = 0; k < recipes.length; k++) {
+  for(let k = 0; k < recipes.length; k++) {
     
     
     const currentRecipe = cookbook[recipes[k]];
     const multiplier = quantityMultiples[recipesToIndex[recipes[k]]]
-
+    
     if ("requiredItems" in currentRecipe) {
       for(let p = 0; p < currentRecipe.requiredItems.length; p++) {
-    
+        
+        const nestedRequired = currentRecipe.requiredItems[p];
+
+        // find the cookbook entry for this ingredient
+        const nestedEntry = cookbook.find(entry => entry.name === nestedRequired.name);
+
+        if (nestedEntry && nestedEntry.type === "ingredient") { 
+          summary.cookTime +=
+           nestedEntry.cookTime *
+           nestedRequired.quantity *
+           multiplier;
+        }
+
         if (summary.ingredients.some(recipeName => recipeName.name ===  currentRecipe.requiredItems[p].name)) {
           //summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity});
           const index = summary.ingredients.findIndex(item => item.name === currentRecipe.requiredItems[p].name);
@@ -265,7 +275,7 @@ app.get("/summary", (req: Request, res: Response) => {
   
   console.log(summary)
 
-  res.send("Hello World!");
+  res.status(200).send(summary);
 });
 
 // =============================================================================
