@@ -98,6 +98,7 @@ const cookbook: (recipe | ingredient)[] = [
   },
 ];
 
+
 // Task 1 helper (don't touch)
 app.post("/parse", (req: Request, res: Response) => {
   const { input } = req.body;
@@ -161,8 +162,8 @@ app.post("/entry", (req: Request, res: Response) => {
       found.add(newEntry.requiredItems[x].name);
     }
   } else {
-    console.log("trip or nah");
-    return res.status(400).end();
+      console.log("trip or nah");
+      return res.status(400).end();
   }
   cookbook.push(newEntry);
   return res.status(200).end();
@@ -180,7 +181,7 @@ app.get("/summary", (req: Request, res: Response) => {
         return cookbook[x];
       }
     }
-    //console.log("Something went really wrong")
+    return res.status(404).end();
   })();
 
   const ingridientPosition = (x) => {
@@ -190,16 +191,60 @@ app.get("/summary", (req: Request, res: Response) => {
       }
     }
     // error case: no such item exists
-    return -1;
+    return res.status(400).end();
   };
-  // ERROR CONTEXT -- saying requiredItems aint a type on ingridient even tho selectedRecipe is always recipe must fix stupid type script
-  //const ingridientPositions: number[] = selectedRecipe.requiredItems.map(ingridientPosition);
+  
+  // if statement solely here to fix typescript narrowing error sigh  
+  if (!selectedRecipe || selectedRecipe.type !== "recipe") {
+    return res.status(400).end();
+  }
+  
+  const ingridientPositions: number[] = selectedRecipe.requiredItems.map(ingridientPosition);
+  
+  const summary: recipe = {
+    type: selectedRecipe.type,
+    name: selectedRecipe.name,
+    requiredItems: []
 
-  //console.log(ingridientPositions)
+  }
+ 
+  
+  const recipes: number[] = []
+  const recipesIndex: number[] = []
 
-  //const isRecipe = () =>
+  for(let j = 0; j < ingridientPositions.length; j++) {
+    if(cookbook[ingridientPositions[j]].type === "ingredient") {
+      summary.requiredItems.push({name: cookbook[ingridientPositions[j]].name, 
+                                  quantity: selectedRecipe.requiredItems[j].quantity})
+    }else {
+      recipes.push(ingridientPositions[j])
+      recipesIndex.push(j)
+    }
+  }
+  
+ 
+ for(let k = 0; k < recipes.length; k++) {
+    
+    // type narrowing
+    const currentRecipe = cookbook[recipes[k]];
 
-  console.log(selectedRecipe.type);
+    if ("requiredItems" in currentRecipe) {
+      for(let p = 0; p < currentRecipe.requiredItems.length; p++) {
+    
+        if (summary.requiredItems.some(recipeName => recipeName.name ===  currentRecipe.requiredItems[p].name)) {
+          //summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity});
+          const index = summary.requiredItems.findIndex(item => item.name === currentRecipe.requiredItems[p].name);
+          if (index !== -1) {
+            summary.requiredItems[index].quantity += (currentRecipe.requiredItems[p].quantity);
+          }
+        }else {
+          summary.requiredItems.push({name: currentRecipe.requiredItems[p].name, quantity: currentRecipe.requiredItems[p].quantity});
+        }
+      }
+    }
+  }
+  
+  console.log(summary)
 
   res.send("Hello World!");
 });
